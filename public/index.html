@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>WebSocket Chat Application</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/ui-darkness/jquery-ui.css">
+	<link rel="stylesheet" href="jspanel/jquery.jspanel.min.css">
+	<style> 
+		.leftsp {margin-left:5px;}
+		#active_users li {padding:10px;}
+		#active_users li span:hover {color:green;}
+		#active_users li span {margin-right:10px;}
+		.chat_area_p {padding:3px;border:1px solid #000;}
+	</style>
+</head>
+<body style="background:#DDD;">
+	<div class="container">
+		<div class="panel panel-default" style="margin:20px;">
+		  <div class="panel-heading">
+			<strong>Active Users : (<span id="active_users_cn"></span>)</strong>
+			<span style="float:right;font-weight:bold;cursor:pointer;" id="show_logs"> Show Logs</span>
+			<span style="float:right;font-weight:bold;cursor:pointer;margin-right:20px;" id="show_info"> Your Info</span>
+		  </div>
+		  <div class="panel-body">
+			<ul id="active_users">
+				
+			</ul>
+		  </div>
+		</div>
+	</div>
+	<div id="log" style="display:none;">
+		<ul style="margin:5px;padding:5px;background:#CCC;list-style:none;"></ul>
+	</div>
+</body>
+<script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+<script src="jspanel/jquery.jspanel-compiled.min.js"></script>
+<script src="client.js"></script>
+</html>

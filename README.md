@@ -1,6 +1,12 @@
 # websocket-chat-app
 WebSocket Chat Application, This Chat app demonstrate how we can use HTML5 websocket api to communicate with server in real time.
 
+# Requirements
+You will need below programs on your machine in order to run this application.
+* Node JS
+* NPM
+* Any modern browser.
+
 # How to Install/Set up code on your PC
 
 * clone this repo

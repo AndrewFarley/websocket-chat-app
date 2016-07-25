@@ -1,4 +1,5 @@
 $(document).ready(function() {
+	//socket instance
 	var socket = new WebSocket('ws://localhost:8081/'); //Use localhost (to test only on your browsers) or your machine IP to test witin a network
 	var user = {id: null, name: "No Name"};
 	var chat_area = '<div class="chat_area"></div>';
@@ -11,7 +12,7 @@ $(document).ready(function() {
 	socket.onerror = function(event) {
 		log('Error: ' + JSON.stringify(event));
 	}
-
+	//socket onmessage listener
 	socket.onmessage = function (event) {
 		try {
 			var d = JSON.parse(event.data) || {};
@@ -43,7 +44,7 @@ $(document).ready(function() {
 				case "msgToUser" :
 					var from_user = d.from_user;
 					if(chat_w[from_user]) {
-						chat_w[from_user].panel.content.find(".chat_area").append('<p class="chat_area_p"><strong>'+d.name+' : </strong>'+d.message+'</p>');
+						chat_w[from_user].panel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
@@ -79,7 +80,7 @@ $(document).ready(function() {
 								}
 							]
 						});
-						cpanel.content.find(".chat_area").append('<p class="chat_area_p"><strong>'+d.name+' : </strong>'+d.message+'</p>');
+						cpanel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
 						chat_w[from_user] = {
 							panel: cpanel
 						}
@@ -92,7 +93,7 @@ $(document).ready(function() {
 			console.log(e.message);
 		}
 	}
-
+	//socket onclose listener
 	socket.onclose = function(event) {
 		log('Closed connection from server/client');
 		$("body").empty();
@@ -201,6 +202,9 @@ $(document).ready(function() {
 		content: '<form class="form-inline" onsubmit="return false;"><div class="form-group"><label for="exampleInputName2">Name : </label><input type="text" class="form-control name_input leftsp" id="exampleInputName2" placeholder="Jane Doe"></div><button class="btn btn-primary leftsp" id="name_input_btn">Submit</button></form>',
 		contentSize:  { width: 400, height: 100 },
 		theme: "bootstrap-primary",
+		callback: function() {
+			this.content.find(".name_input").focus();
+		},
 		onclosed: function(e) {
 			//console.log(e);
 		}

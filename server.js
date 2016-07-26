@@ -30,6 +30,7 @@ wss.on('connection', function(socket) {
 						type: "msgToUser",
 						from_user: msg.from_user,
 						message: msg.message,
+						time: msg.time,
 						name: wsUsers[msg.from_user] ? wsUsers[msg.from_user].name : "Unknown"
 					}
 					if(wsUsers[msg.to_user]) {

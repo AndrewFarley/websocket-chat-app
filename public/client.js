@@ -1,8 +1,13 @@
 $(document).ready(function() {
 	//socket instance
 	var socket = new WebSocket('ws://localhost:8081/'); //Use localhost (to test only on your browsers) or your machine IP to test witin a network
+	//current user refrence
 	var user = {id: null, name: "No Name"};
+	//chat messages container template
 	var chat_area = '<div class="chat_area"></div>';
+	//chat message wrapper
+	var chat_area_m = '<div class="chat_area_msg"><div class="chat_area_msg_head" ><span class="name" ></span><span class="ts" ></span></div><div class="hr"></div><div class="chat_area_msg_body"></div></div>';
+	//chat windows container
 	var chat_w = {};
 	
 	socket.onopen = function(event) {
@@ -44,7 +49,7 @@ $(document).ready(function() {
 				case "msgToUser" :
 					var from_user = d.from_user;
 					if(chat_w[from_user]) {
-						chat_w[from_user].panel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
+						$(chat_area_m).find(".name").html(d.name).end().find(".ts").html(d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(chat_w[from_user].panel.content.find(".chat_area"));
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
@@ -67,20 +72,24 @@ $(document).ready(function() {
 									btntext: "Send",
 									callback: function( event ){
 										var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
-										event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
+										var time = moment(Date.now()).format("DD-MM-YYYY h:mm:ss");
+										$(chat_area_m).find(".name").html(user.name).end().find(".ts").html(time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
+										//event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
 										event.data.content.parent().find('.chat_input').val("");
 										json = {
 											type: "msgFromUser",
 											to_user: from_user,
 											from_user: user.id,
-											message: m
+											message: m,
+											time: time
 										}
 										socket.send(JSON.stringify(json));
 									}
 								}
 							]
 						});
-						cpanel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
+						$(chat_area_m).find(".name").html(d.name).end().find(".ts").html(d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(cpanel.content.find(".chat_area"));
+						//cpanel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
 						chat_w[from_user] = {
 							panel: cpanel
 						}
@@ -115,7 +124,7 @@ $(document).ready(function() {
 	$(document).on("click", "#active_users li button", function(e) {
 		var li = $(this).parent();
 		var name = li.attr("data-username"), id = li.attr("data-userid");
-		
+		$(this).prop("disabled", true);
 		var cpanel = $.jsPanel({
 			container: 'body',
 			headerTitle: name.toUpperCase(),
@@ -137,13 +146,16 @@ $(document).ready(function() {
 					btntext: "Send",
 					callback: function( event ){
 						var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
-						event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
+						var time = moment(Date.now()).format("DD-MM-YYYY h:mm:ss");
+						$(chat_area_m).find(".name").html(user.name).end().find(".ts").html(time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
+						//event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
 						event.data.content.parent().find('.chat_input').val("");
 						json = {
 							type: "msgFromUser",
 							to_user: id,
 							from_user: user.id,
-							message: m
+							message: m,
+							time: time
 						}
 						socket.send(JSON.stringify(json));
 					}

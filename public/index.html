@@ -14,8 +14,12 @@
 		#active_users li {padding:10px;}
 		#active_users li span:hover {color:green;}
 		#active_users li span {margin-right:10px;}
-		.chat_area_p {padding:3px;border:1px solid green;}
-		.chat_area_p_r {padding:3px;border:1px solid blue;}
+		.chat_area_msg {min-height: 50px;background: #ccc;margin: 10px;padding: 5px;height: auto;-moz-border-radius: 5px;-webkit-border-radius: 5px;border-radius: 5px;-webkit-box-shadow: 0 2px 2px 0 #C2C2C2;box-shadow: 0 2px 2px 0 #C2C2C2;}
+		.chat_area_msg_head {font-size: 14px;font-weight: bold;height: 20px;}
+		.chat_area_msg_body {margin: 5px;word-wrap: break-word;word-break: break-word;}
+		.chat_area_msg .name {float: left;}
+		.chat_area_msg .ts {float: right;display: inline-block;}
+		.chat_area_msg .hr {height:1px;background:#000;}
 	</style>
 </head>
 <body style="background:#DDD;">
@@ -38,6 +42,7 @@
 	</div>
 </body>
 <script src="http://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script src="http://momentjs.com/downloads/moment-with-locales.min.js"></script>
 <script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
 <script src="jspanel/jquery.jspanel-compiled.min.js"></script>
 <script src="client.js"></script>

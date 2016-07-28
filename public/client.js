@@ -1,3 +1,8 @@
+// Livestamp.js / v1.1.2 / (c) 2012 Matt Bradley / MIT License
+(function(d,g){var h=1E3,i=!1,e=d([]),j=function(b,a){var c=b.data("livestampdata");"number"==typeof a&&(a*=1E3);b.removeAttr("data-livestamp").removeData("livestamp");a=g(a);g.isMoment(a)&&!isNaN(+a)&&(c=d.extend({},{original:b.contents()},c),c.moment=g(a),b.data("livestampdata",c).empty(),e.push(b[0]))},k=function(){i||(f.update(),setTimeout(k,h))},f={update:function(){d("[data-livestamp]").each(function(){var a=d(this);j(a,a.data("livestamp"))});var b=[];e.each(function(){var a=d(this),c=a.data("livestampdata");
+  if(void 0===c)b.push(this);else if(g.isMoment(c.moment)){var e=a.html(),c=c.moment.fromNow();if(e!=c){var f=d.Event("change.livestamp");a.trigger(f,[e,c]);f.isDefaultPrevented()||a.html(c)}}});e=e.not(b)},pause:function(){i=!0},resume:function(){i=!1;k()},interval:function(b){if(void 0===b)return h;h=b}},l={add:function(b,a){"number"==typeof a&&(a*=1E3);a=g(a);g.isMoment(a)&&!isNaN(+a)&&(b.each(function(){j(d(this),a)}),f.update());return b},destroy:function(b){e=e.not(b);b.each(function(){var a=
+  d(this),c=a.data("livestampdata");if(void 0===c)return b;a.html(c.original?c.original:"").removeData("livestampdata")});return b},isLivestamp:function(b){return void 0!==b.data("livestampdata")}};d.livestamp=f;d(function(){f.resume()});d.fn.livestamp=function(b,a){l[b]||(a=b,b="add");return l[b](this,a)}})(jQuery,moment);
+//Application code
 $(document).ready(function() {
 	//socket instance
 	var socket = new WebSocket('ws://localhost:8081/'); //Use localhost (to test only on your browsers) or your machine IP to test witin a network
@@ -49,7 +54,7 @@ $(document).ready(function() {
 				case "msgToUser" :
 					var from_user = d.from_user;
 					if(chat_w[from_user]) {
-						$(chat_area_m).find(".name").html(d.name).end().find(".ts").html(d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(chat_w[from_user].panel.content.find(".chat_area"));
+						$(chat_area_m).find(".name").html(d.name).end().find(".ts").attr("data-livestamp", d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(chat_w[from_user].panel.content.find(".chat_area"));
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
@@ -70,26 +75,16 @@ $(document).ready(function() {
 									event: "click",
 									btnclass: "btn btn-primary btn-sm",
 									btntext: "Send",
-									callback: function( event ){
-										var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
-										var time = moment(Date.now()).format("DD-MM-YYYY h:mm:ss");
-										$(chat_area_m).find(".name").html(user.name).end().find(".ts").html(time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
-										//event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
-										event.data.content.parent().find('.chat_input').val("");
-										json = {
-											type: "msgFromUser",
-											to_user: from_user,
-											from_user: user.id,
-											message: m,
-											time: time
-										}
-										socket.send(JSON.stringify(json));
-									}
+									callback: sendChatMessage.bind(null,{id:from_user,name:d.name})
 								}
 							]
 						});
-						$(chat_area_m).find(".name").html(d.name).end().find(".ts").html(d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(cpanel.content.find(".chat_area"));
-						//cpanel.content.find(".chat_area").append('<p class="chat_area_p_r"><strong>'+d.name+' : </strong>'+d.message+'</p>');
+						$(chat_area_m).find(".name").html(d.name).end().find(".ts").attr("data-livestamp", d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(cpanel.content.find(".chat_area"));
+						cpanel.content.parent().find(".chat_input").on("keypress", function(e) {
+							if(e.keyCode == 13) {
+								sendChatMessage({id:from_user,name:d.name},{data:cpanel});
+							}
+						});
 						chat_w[from_user] = {
 							panel: cpanel
 						}
@@ -144,28 +139,35 @@ $(document).ready(function() {
 					event: "click",
 					btnclass: "btn btn-primary btn-sm",
 					btntext: "Send",
-					callback: function( event ){
-						var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
-						var time = moment(Date.now()).format("DD-MM-YYYY h:mm:ss");
-						$(chat_area_m).find(".name").html(user.name).end().find(".ts").html(time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
-						//event.data.content.find(".chat_area").append('<p class="chat_area_p"><strong>You : </strong>'+m+'</p>');
-						event.data.content.parent().find('.chat_input').val("");
-						json = {
-							type: "msgFromUser",
-							to_user: id,
-							from_user: user.id,
-							message: m,
-							time: time
-						}
-						socket.send(JSON.stringify(json));
-					}
+					callback: sendChatMessage.bind(null,{id:id,name:name})
 				}
 			]
+		});
+		cpanel.content.parent().find(".chat_input").on("keypress", function(e) {
+			if(e.keyCode == 13) {
+				sendChatMessage({id:id,name:name},{data:cpanel});
+			}
 		});
 		chat_w[id] = {
 			panel: cpanel
 		}
 	});
+	
+	//Send chat message function, used as a callback
+	function sendChatMessage(targetUser, event) {
+		var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
+		var time = Math.floor(+new Date / 1000);
+		$(chat_area_m).find(".name").html(user.name).end().find(".ts").attr("data-livestamp", time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
+		event.data.content.parent().find('.chat_input').val("");
+		json = {
+			type: "msgFromUser",
+			to_user: targetUser.id,
+			from_user: user.id,
+			message: m,
+			time: time
+		}
+		socket.send(JSON.stringify(json));
+	}
 	
 	//Log function
 	function log(text) {

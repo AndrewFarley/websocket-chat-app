@@ -7,7 +7,7 @@ var server = http.createServer(app);
 //server.listen(8080, '127.0.0.1'); //server will provide access to localhost only ex: http://localhost:8080/
 //server.listen(8080, '10.240.2.122'); //server will provide access to given local IP, ex: http://10.240.2.122:8080/ can be used in local LAN network
 server.listen(8080);
-
+console.log("Server started at http://localhost:8080");
 var wss = new WSS({ port: 8081 });
 var wsUsers = {};
 wss.on('connection', function(socket) {

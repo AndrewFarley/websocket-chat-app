@@ -14,9 +14,10 @@ $(document).ready(function() {
 	var chat_area_m = '<div class="chat_area_msg"><div class="chat_area_msg_head" ><span class="name" ></span><span class="ts" ></span></div><div class="hr"></div><div class="chat_area_msg_body"></div></div>';
 	//chat windows container
 	var chat_w = {};
+	var jspanelStart;
 	
 	socket.onopen = function(event) {
-		log('Opened connection client');
+		log('Opened connection from client');
 	}
 
 	socket.onerror = function(event) {
@@ -41,9 +42,12 @@ $(document).ready(function() {
 							}
 						}
 						var you = (val.id == user.id) ? " (Its You)" : "";
-						html += '<li data-userid="'+val.id+'" data-username="'+val.name+'"><span><strong>'+val.name+you+'</strong></span><button class="btn btn-primary btn-sm leftsp" '+dis+' '+dis_others+'>Chat</button></li>';
+						var tooltip = you ? 'data-toggle="tooltip" data-placement="top" title="Click here to edit your name"' : "";
+						var ucls = you ? "currentUser" : "";
+						html += '<li class="list-group-item '+ucls+'" data-userid="'+val.id+'" data-username="'+val.name+'"><span '+tooltip+'><strong>'+val.name+you+'</strong></span><button class="btn btn-primary btn-sm leftsp" '+dis+' '+dis_others+'>Chat</button></li>';
 					});
 					$("#active_users").html(html);
+					$('#active_users li.currentUser span').tooltip();
 					break;
 				case "userDisconnected" :
 					if(chat_w[d.id]) {
@@ -55,12 +59,14 @@ $(document).ready(function() {
 					var from_user = d.from_user;
 					if(chat_w[from_user]) {
 						$(chat_area_m).find(".name").html(d.name).end().find(".ts").attr("data-livestamp", d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(chat_w[from_user].panel.content.find(".chat_area"));
+						$(chat_w[from_user].panel.content).scrollTop(chat_w[from_user].panel.content.get(0).scrollHeight);
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
+							position: {my: "right-bottom", at: "right-bottom"},
 							headerTitle: d.name.toUpperCase(),
 							content: chat_area,
-							contentSize:  { width: 500, height: 300 },
+							contentSize:  { width: 300, height: 200 },
 							theme: "bootstrap-primary",
 							contentOverflow: 'auto',
 							onclosed: function() {
@@ -80,6 +86,7 @@ $(document).ready(function() {
 							]
 						});
 						$(chat_area_m).find(".name").html(d.name).end().find(".ts").attr("data-livestamp", d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo(cpanel.content.find(".chat_area"));
+						$(cpanel.content).scrollTop(cpanel.content.get(0).scrollHeight);
 						cpanel.content.parent().find(".chat_input").on("keypress", function(e) {
 							if(e.keyCode == 13) {
 								sendChatMessage({id:from_user,name:d.name},{data:cpanel});
@@ -122,9 +129,10 @@ $(document).ready(function() {
 		$(this).prop("disabled", true);
 		var cpanel = $.jsPanel({
 			container: 'body',
+			position: {my: "right-bottom", at: "right-bottom"},
 			headerTitle: name.toUpperCase(),
 			content: chat_area,
-			contentSize:  { width: 500, height: 300 },
+			contentSize:  { width: 300, height: 200 },
 			theme: "bootstrap-primary",
 			contentOverflow: 'auto',
 			onclosed: function() {
@@ -158,6 +166,7 @@ $(document).ready(function() {
 		var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
 		var time = Math.floor(+new Date / 1000);
 		$(chat_area_m).find(".name").html(user.name).end().find(".ts").attr("data-livestamp", time).end().find(".chat_area_msg_body").html(m).end().appendTo(event.data.content.find(".chat_area"));
+		$(event.data.content).scrollTop(event.data.content.get(0).scrollHeight);
 		event.data.content.parent().find('.chat_input').val("");
 		json = {
 			type: "msgFromUser",
@@ -174,7 +183,7 @@ $(document).ready(function() {
 		if($("#log ul li").length > 200) {
 			$("#log ul").empty();
 		}
-		$("#log ul").append("<li>"+text+"</li>");
+		$("#log ul").append("<li class='list-group-item'>"+text+"</li>");
 	}
 	
 	//Show Logs click handler
@@ -208,22 +217,25 @@ $(document).ready(function() {
 		startTimer();
 		show_logs_panel = true;
 	});
-	//Page load jsPanel for getting username
-	var jspanelStart = $.jsPanel({
-		container: 'body',
-		paneltype: 'modal',
-		headerTitle: "Enter Your Name",
-		content: '<form class="form-inline" onsubmit="return false;"><div class="form-group"><label for="exampleInputName2">Name : </label><input type="text" class="form-control name_input leftsp" id="exampleInputName2" placeholder="Jane Doe"></div><button class="btn btn-primary leftsp" id="name_input_btn">Submit</button></form>',
-		contentSize:  { width: 400, height: 100 },
-		theme: "bootstrap-primary",
-		callback: function() {
-			this.content.find(".name_input").focus();
-		},
-		onclosed: function(e) {
-			//console.log(e);
-		}
-	});
-	//Page load name modal button handler
+	//Page load form for getting username
+	function userForm(name) {
+		jspanelStart = $.jsPanel({
+			container: 'body',
+			paneltype: 'modal',
+			headerTitle: "Enter Your Name",
+			content: '<form class="form-inline" onsubmit="return false;"><div class="form-group"><label for="exampleInputName2">Name : </label><input type="text" class="form-control name_input leftsp" id="exampleInputName2" placeholder="Jane Doe"></div><button class="btn btn-primary leftsp" id="name_input_btn">Submit</button></form>',
+			contentSize:  { width: 400, height: 100 },
+			theme: "bootstrap-primary",
+			callback: function() {
+				this.content.find(".name_input").val(name ? user.name : "").focus();
+			},
+			onclosed: function(e) {
+				//console.log(e);
+			}
+		});
+	}
+	userForm();
+	//User form modal button handler
 	$(document).on("click", "#name_input_btn", function(e) {
 		if(!$(this).parent().find("input").val()) {
 			alert("Please enter your name");
@@ -231,9 +243,14 @@ $(document).ready(function() {
 		}
 		var data = JSON.stringify({ type: "nameUpdate", username: $(this).parent().find("input").val() });
 		user.name = $(this).parent().find("input").val();
+		$("title").text(user.name.toUpperCase() + " | WebSocket Chat Application");
+		log("Username value updated at "+moment().format('MMMM Do YYYY, h:mm:ss A')+", new value : " + user.name);
 		socket.send(data);
-		jspanelStart.close();
+		jspanelStart && jspanelStart.close();
 	});
+	
+	$(document).on("click", "#active_users li.currentUser span", userForm.bind(null,true));
+	
 	//Show info click handler
 	var show_info_panel = false;
 	$(document).on("click", "#show_info", function() {
@@ -241,6 +258,11 @@ $(document).ready(function() {
 			return;
 		}
 		var panel = $.jsPanel({
+			headerControls: {
+				minimize: 'remove',
+				smallify: 'remove',
+				maximize: 'remove'
+			},
 			container: 'body',
 			//paneltype: 'modal',
 			headerTitle: "Your Information",
@@ -254,5 +276,4 @@ $(document).ready(function() {
 		});
 		show_info_panel = true;
 	});
-	
 });

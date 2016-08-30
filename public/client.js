@@ -55,6 +55,10 @@ $(document).ready(function() {
 						delete chat_w[d.id];
 					}
 					break;
+				case "chatRoomMessageBroadcast" :
+					$(chat_area_m).find(".name").html(d.name).end().find(".ts").attr("data-livestamp", d.time).end().find(".chat_area_msg_body").html(d.message).end().appendTo($(".app_panel_body .chat_area"));
+					$(".app_panel_body").scrollTop($(".app_panel_body").get(0).scrollHeight);
+					break;
 				case "msgToUser" :
 					var from_user = d.from_user;
 					if(chat_w[from_user]) {
@@ -63,7 +67,7 @@ $(document).ready(function() {
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
-							position: {my: "right-bottom", at: "right-bottom"},
+							position: {my: "right-bottom", at: "right-bottom", offsetX: setOffsetX, offsetY: setOffsetY},
 							headerTitle: d.name.toUpperCase(),
 							content: chat_area,
 							contentSize:  { width: 300, height: 200 },
@@ -129,7 +133,7 @@ $(document).ready(function() {
 		$(this).prop("disabled", true);
 		var cpanel = $.jsPanel({
 			container: 'body',
-			position: {my: "right-bottom", at: "right-bottom"},
+			position: {my: "right-bottom", at: "right-bottom", offsetX: setOffsetX, offsetY: setOffsetY},
 			headerTitle: name.toUpperCase(),
 			content: chat_area,
 			contentSize:  { width: 300, height: 200 },
@@ -161,7 +165,7 @@ $(document).ready(function() {
 		}
 	});
 	
-	//Send chat message function, used as a callback
+	//Send chat message to a specific user, used as a callback
 	function sendChatMessage(targetUser, event) {
 		var m = event.data.content.parent().find('.chat_input').val() || "No Input", json;
 		var time = Math.floor(+new Date / 1000);
@@ -251,29 +255,56 @@ $(document).ready(function() {
 	
 	$(document).on("click", "#active_users li.currentUser span", userForm.bind(null,true));
 	
-	//Show info click handler
-	var show_info_panel = false;
-	$(document).on("click", "#show_info", function() {
-		if(show_info_panel) {
+	function setOffsetX() {
+		var w = Object.keys(chat_w);
+		if(!w.length) {
+			return "5px";
+		}
+		//return '-' + (w.length * 300) + 'px';
+		return 0;
+	}
+	
+	function setOffsetY() {
+		return 0;
+	}
+	
+	function adjustPanelsHeight() {
+		var w = $(window).width(), h = $(window).height(), pb = $('.app_panel_body'), pu = $('.app_users'), pc = $('.app_chat_rooms'); h = h - 130;
+		var css1 = {'min-height':'200px','max-height':'300px','overflow':'auto'},
+			css2 = {'min-height':h+'px','max-height':h+'px','overflow':'auto'};
+		w <= 768 ? (pb.css(css1),pu.css(css1),pc.css(css1),$('#btnSendMsg').css("float","none"),
+		$('#p_msg').css("width",($('#p_msg').closest("form").width()-70)+"px"),$('body').css("overflow","auto")) : 
+		(pb.css(css2), pu.css({'min-height':(h/2-4)+'px','max-height':(h/2-4)+'px','overflow':'auto'}),
+		pc.css({'min-height':(h/2-4)+'px','max-height':(h/2-4)+'px','overflow':'auto'}),$('#btnSendMsg').css("float","right"),
+		$('#p_msg').css("width",($('#p_msg').closest("form").width()-70)+"px"),$('body').css("overflow","hidden"));
+	}
+	adjustPanelsHeight();
+	$(window).on("resize", adjustPanelsHeight);
+	
+	
+	$(document).on("click", "#btnSendMsg", handleChatRoomMessage);
+	
+	function handleChatRoomMessage(e) {
+		e.preventDefault();
+		var f = $(this).closest("form"), v = f.find('input').val();
+		if(!v) {
+			f.find(".form-group").addClass("has-error");
+			f.find("input").off("focus").on("focus", function() {
+				$(this).parent().hasClass("has-error") && $(this).parent().removeClass("has-error");
+			});
 			return;
 		}
-		var panel = $.jsPanel({
-			headerControls: {
-				minimize: 'remove',
-				smallify: 'remove',
-				maximize: 'remove'
-			},
-			container: 'body',
-			//paneltype: 'modal',
-			headerTitle: "Your Information",
-			content: '<p><strong>ID : '+(user.id || "NA")+'</strong></p><p><strong>NAME : '+(user.name || "NA")+'</strong></p>',
-			contentSize:  { width: 300, height: 100 },
-			theme: "bootstrap-primary",
-			contentOverflow: 'auto',
-			onclosed: function() {
-				show_info_panel = false;
-			}
-		});
-		show_info_panel = true;
-	});
+		var time = Math.floor(+new Date / 1000);
+		$(chat_area_m).find(".name").html(user.name).end().find(".ts").attr("data-livestamp", time).end().find(".chat_area_msg_body").html(v).end().appendTo($(".app_panel_body .chat_area"));
+		$(".app_panel_body").scrollTop($(".app_panel_body").get(0).scrollHeight);
+		f.find('input').val("");
+		f.find(".form-group").hasClass("has-error") && f.find(".form-group").removeClass("has-error");
+		json = {
+			type: "chatRoomMessage",
+			from_user: user.id,
+			message: v,
+			time: time
+		}
+		socket.send(JSON.stringify(json));
+	}
 });

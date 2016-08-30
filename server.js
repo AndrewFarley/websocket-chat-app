@@ -5,7 +5,7 @@ var WSS = require('ws').Server;
 var app = express().use(express.static('public'));
 var server = http.createServer(app);
 //server.listen(8080, '127.0.0.1'); //server will provide access to localhost only ex: http://localhost:8080/
-//server.listen(8080, '10.240.2.122'); //server will provide access to given local IP, ex: http://10.240.2.122:8080/ can be used in local LAN network
+//server.listen(8080, 'local.ip'); //server will provide access to given local IP, ex: http://local.ip:8080/ can be used in local LAN network
 server.listen(8080);
 console.log("Server started at http://localhost:8080");
 var wss = new WSS({ port: 8081 });
@@ -36,6 +36,20 @@ wss.on('connection', function(socket) {
 					if(wsUsers[msg.to_user]) {
 						wsUsers[msg.to_user].socket.send(JSON.stringify(json));
 					}
+					break;
+				case "chatRoomMessage" :
+					var json = {
+						type: "chatRoomMessageBroadcast",
+						from_user: msg.from_user,
+						message: msg.message,
+						time: msg.time,
+						name: wsUsers[msg.from_user] ? wsUsers[msg.from_user].name : "Unknown"
+					}, users = Object.keys(wsUsers);
+					users.forEach(function(v) {
+						if(v != msg.from_user) {
+							wsUsers[v].socket.send(JSON.stringify(json));
+						}
+					});
 					break;
 				default :
 					console.log(message);

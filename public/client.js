@@ -15,6 +15,27 @@ $(document).ready(function() {
 	//chat windows container
 	var chat_w = {};
 	var jspanelStart;
+	/**
+	* Fast UUID generator, RFC4122 version 4 compliant.
+	* @author Jeff Ward (jcward.com).
+	* @license MIT license
+	* @link http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/21963136#21963136
+	**/
+	var UUID = (function() {
+		var self = {};
+		var lut = []; for (var i=0; i<256; i++) { lut[i] = (i<16?'0':'')+(i).toString(16); }
+		self.generate = function() {
+			var d0 = Math.random()*0xffffffff|0;
+			var d1 = Math.random()*0xffffffff|0;
+			var d2 = Math.random()*0xffffffff|0;
+			var d3 = Math.random()*0xffffffff|0;
+			return lut[d0&0xff]+lut[d0>>8&0xff]+lut[d0>>16&0xff]+lut[d0>>24&0xff]+'-'+
+			lut[d1&0xff]+lut[d1>>8&0xff]+'-'+lut[d1>>16&0x0f|0x40]+lut[d1>>24&0xff]+'-'+
+			lut[d2&0x3f|0x80]+lut[d2>>8&0xff]+'-'+lut[d2>>16&0xff]+lut[d2>>24&0xff]+
+			lut[d3&0xff]+lut[d3>>8&0xff]+lut[d3>>16&0xff]+lut[d3>>24&0xff];
+		}
+		return self;
+	})();
 	
 	socket.onopen = function(event) {
 		log('Opened connection from client');
@@ -67,6 +88,8 @@ $(document).ready(function() {
 					} else {
 						var cpanel = $.jsPanel({
 							container: 'body',
+							headerControls: {controls: "closeonly"},
+							draggable: false,
 							position: {my: "right-bottom", at: "right-bottom", offsetX: setOffsetX, offsetY: setOffsetY},
 							headerTitle: d.name.toUpperCase(),
 							content: chat_area,
@@ -133,6 +156,8 @@ $(document).ready(function() {
 		$(this).prop("disabled", true);
 		var cpanel = $.jsPanel({
 			container: 'body',
+			headerControls: {controls: "closeonly"},
+			draggable: false,
 			position: {my: "right-bottom", at: "right-bottom", offsetX: setOffsetX, offsetY: setOffsetY},
 			headerTitle: name.toUpperCase(),
 			content: chat_area,
@@ -234,7 +259,7 @@ $(document).ready(function() {
 				this.content.find(".name_input").val(name ? user.name : "").focus();
 			},
 			onclosed: function(e) {
-				//console.log(e);
+				jspanelStart && (jspanelStart = null);
 			}
 		});
 	}
@@ -256,12 +281,13 @@ $(document).ready(function() {
 	$(document).on("click", "#active_users li.currentUser span", userForm.bind(null,true));
 	
 	function setOffsetX() {
+		//todo refactor this function
 		var w = Object.keys(chat_w);
 		if(!w.length) {
 			return "5px";
 		}
-		//return '-' + (w.length * 300) + 'px';
-		return 0;
+		return '-' + (w.length * 300) + 'px';
+		//return 0;
 	}
 	
 	function setOffsetY() {
@@ -289,12 +315,12 @@ $(document).ready(function() {
 		var f = $(this).closest("form"), v = f.find('input').val();
 		if(!v) {
 			f.find(".form-group").addClass("has-error");
-			f.find("input").off("focus").on("focus", function() {
+			f.find("input").off("focus").one("focus", function() {
 				$(this).parent().hasClass("has-error") && $(this).parent().removeClass("has-error");
 			});
 			return;
 		}
-		var time = Math.floor(+new Date / 1000);
+		var time = Math.floor(+new Date / 1000), json;
 		$(chat_area_m).find(".name").html(user.name).end().find(".ts").attr("data-livestamp", time).end().find(".chat_area_msg_body").html(v).end().appendTo($(".app_panel_body .chat_area"));
 		$(".app_panel_body").scrollTop($(".app_panel_body").get(0).scrollHeight);
 		f.find('input').val("");
@@ -307,4 +333,62 @@ $(document).ready(function() {
 		}
 		socket.send(JSON.stringify(json));
 	}
+	
+	$(document).on("click", "#create-chat-room", createChatRoom);
+	
+	function createChatRoom(e) {
+		jspanelStart = $.jsPanel({
+			container: "body",
+			paneltype: 'modal',
+			headerTitle: "Create Chat Room",
+			content: '<form class="form-inline" onsubmit="return false;"><div class="form-group"><input type="text" class="form-control" id="crinput" placeholder="Enter a name for chat room"></div><button type="submit" class="btn btn-primary leftsp" id="btnCreateChatRoom" style="vertical-align:top;">Create</button></form>',
+			contentSize:  { width: 323, height: 100 },
+			theme: "bootstrap-primary",
+			callback: function() {
+				this.content.find("#crinput").val("").focus();
+			},
+			onclosed: function(e) {
+				jspanelStart && (jspanelStart = null);
+			}
+		});
+	}
+	
+	$(document).on("click", "#btnCreateChatRoom", function() {
+		var b = $(this), json, id = '_' + UUID.generate(), v = $('#crinput').val(), msg;
+		if(!v || v.length > 30) {
+			msg = !v ? "Room name is required" : "Room name must be less than 30 char.";
+			$('#crinput').parent().append('<p class="help-block">'+msg+'</p>');
+			$('#crinput').parent().addClass("has-error").end().off("focus").one("focus", function() {
+				$(this).parent().hasClass("has-error") && $(this).parent().removeClass("has-error");
+				$(this).parent().find("p").length && $(this).parent().find("p").remove();
+			});
+			return;
+		}
+		b.attr("disabled", true);
+		json = {
+			type: "actionCreateChatRoom",
+			id: id,
+			name: v,
+			creator: user.id
+		};
+		$('#active_chat_rooms').prepend('<li class="list-group-item" data-id="'+id+'" data-creator="'+user.id+'"><b>'+v+'</b><span class="glyphicon glyphicon-plus leftsp joinroom" style="float:right;cursor:pointer;" title="Join Room" data-toggle="tooltip" data-placement="left"></span><span class="glyphicon glyphicon-trash deleteroom" style="float:right;cursor:pointer;" title="Delete Room" data-toggle="tooltip" data-placement="left"></span></li>');
+		$('#active_chat_rooms li:first span').tooltip();
+		jspanelStart && jspanelStart.close();
+	});
+	
+	$(document).on("click", "span.joinroom", function() {
+		var li = $(this).closest("li");
+		$(this).tooltip('hide');
+		li.addClass("active");
+		$(this).replaceWith('<span class="glyphicon glyphicon-off leftsp leaveroom" style="float:right;cursor:pointer;" title="Leave Room" data-toggle="tooltip" data-placement="left"></span>');
+		li.find(".leaveroom").tooltip();
+	});
+	
+	$(document).on("click", "span.leaveroom", function() {
+		var li = $(this).closest("li");
+		$(this).tooltip('hide');
+		li.removeClass("active");
+		$(this).replaceWith('<span class="glyphicon glyphicon-plus leftsp joinroom" style="float:right;cursor:pointer;" title="Join Room" data-toggle="tooltip" data-placement="left"></span>');
+		li.find(".joinroom").tooltip();
+	});
 });

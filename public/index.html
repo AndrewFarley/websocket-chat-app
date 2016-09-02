@@ -10,7 +10,7 @@
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/ui-darkness/jquery-ui.css">
 	<link rel="stylesheet" href="jspanel/jquery.jspanel.min.css">
 	<style> 
-		.leftsp {margin-left:5px;}
+		.leftsp {margin-left:10px;}
 		#active_users li {padding:10px;}
 		#active_users li span:hover {color:green;}
 		#active_users li span {margin-right:10px;}
@@ -30,7 +30,7 @@
 				<div class="panel panel-default">
 					<div class="panel-heading">
 						<strong>Online Users : (<span id="active_users_cn"></span>)
-						<span style="float:right;cursor:pointer;" id="show_logs"> Show Logs</span></strong>
+						<span class="btn btn-primary btn-xs" style="float:right;cursor:pointer;" id="show_logs"> Show Logs</span></strong>
 					</div>
 					<div class="panel-body app_users">
 						<ul id="active_users" class="list-group"></ul>
@@ -38,10 +38,10 @@
 				</div>
 				<div class="panel panel-default">
 					<div class="panel-heading"><strong>Chat Rooms
-						<span style="float:right;cursor:pointer;" id="create-chat-room">Create Room</span></strong>
+						<span class="btn btn-primary btn-xs" style="float:right;cursor:pointer;" id="create-chat-room">Create Room</span></strong>
 					</div>
 					<div class="panel-body app_chat_rooms">
-					This feature is yet to do.
+						<ul id="active_chat_rooms" class="list-group"></ul>
 					</div>
 				</div>
 			</div>

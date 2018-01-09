@@ -5,7 +5,7 @@
 //Application code
 $(document).ready(function() {
 	//socket instance
-	var socket = new WebSocket('ws://localhost:8081/'); //Use localhost (to test only on your browsers) or your machine IP to test witin a network
+	var socket = new WebSocket('wss://localhost:8080/'); //Use localhost (to test only on your browsers) or your machine IP to test witin a network
 	//current user refrence
 	var user = {id: null, name: "No Name"};
 	//chat messages container template

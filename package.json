@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon server.js",
+    "start": "nodemon server.https.js",
     "test": "mocha --timeout 10000"
   },
   "main": "server.js",
